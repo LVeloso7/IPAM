@@ -8,61 +8,77 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.projeto.ipam.comum.ConflitoException;
 import com.projeto.ipam.comum.RecursoNaoEncontradoException;
+import com.projeto.ipam.subrede.SubRedeRepository;
 
-
-@Service 
-@Transactional (readOnly = true)
-
+@Service
+@Transactional(readOnly = true)
 public class VrfService {
-    
+
     private final VrfRepository repository;
-    
-    public VrfService(VrfRepository repository){
+    private final SubRedeRepository subRedeRepository;
+
+    public VrfService(VrfRepository repository, SubRedeRepository subRedeRepository) {
         this.repository = repository;
+        this.subRedeRepository = subRedeRepository;
     }
-       
+
     public List<Vrf> listar() {
         return repository.findAll(Sort.by("nome"));
     }
-    
-    public Vrf buscarPorId(Long id){
+
+    public Vrf buscarPorId(Long id) {
         return repository.findById(id)
-            .orElseThrow(() -> new RecursoNaoEncontradoException(
-                "VRF " + id + " não encontrada"));
+                .orElseThrow(() -> naoEncontrada(id));
     }
-    
-    @Transactional //1
-    public Vrf criar (String nome, String rd, String descricao){
-        String nomeLimpo = normalizar (nome);
-        
-        if (repository.existsByNomeIgnoreCase(nomeLimpo)){
+
+    // Bloqueia a VRF até o fim da transação: alterações estruturais em fila.
+    @Transactional
+    public Vrf bloquearParaAlteracao(Long id) {
+        return repository.buscarComBloqueio(id)
+                .orElseThrow(() -> naoEncontrada(id));
+    }
+
+    @Transactional
+    public Vrf criar(String nome, String rd, String descricao) {
+        String nomeLimpo = normalizar(nome);
+
+        if (repository.existsByNomeIgnoreCase(nomeLimpo)) {
             throw new ConflitoException("Já existe uma VRF com o nome '" + nomeLimpo + "'");
         }
+
         Vrf vrf = new Vrf(nomeLimpo, normalizar(rd), normalizar(descricao));
         return repository.save(vrf);
-        
     }
-    
-    @Transactional //2
-    public Vrf atualizar(Long id, String nome, String rd, String descricao){
+
+    @Transactional
+    public Vrf atualizar(Long id, String nome, String rd, String descricao) {
         Vrf vrf = buscarPorId(id);
         String nomeLimpo = normalizar(nome);
-        
-        if (repository.existsByNomeIgnoreCaseAndIdNot(nomeLimpo, id)){
+
+        if (repository.existsByNomeIgnoreCaseAndIdNot(nomeLimpo, id)) {
             throw new ConflitoException("Já existe outra VRF com o nome '" + nomeLimpo + "'");
         }
-        
+
         vrf.atualizar(nomeLimpo, normalizar(rd), normalizar(descricao));
         return vrf;
     }
-    
-    @Transactional //3
+
+    @Transactional
     public void excluir(Long id) {
-        Vrf vrf = buscarPorId(id);
+        Vrf vrf = bloquearParaAlteracao(id);
+
+        if (subRedeRepository.existsByVrfId(id)) {
+            throw new ConflitoException(
+                    "A VRF '" + vrf.getNome() + "' possui sub-redes e não pode ser excluída");
+        }
         repository.delete(vrf);
     }
-    
-    private String normalizar (String valor) {
+
+    private RecursoNaoEncontradoException naoEncontrada(Long id) {
+        return new RecursoNaoEncontradoException("VRF " + id + " não encontrada");
+    }
+
+    private String normalizar(String valor) {
         if (valor == null) {
             return null;
         }

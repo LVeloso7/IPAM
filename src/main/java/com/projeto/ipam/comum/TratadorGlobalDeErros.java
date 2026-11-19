@@ -45,4 +45,9 @@ public class TratadorGlobalDeErros {
         return ProblemDetail.forStatusAndDetail(
                 HttpStatus.CONFLICT, "A operação viola uma restrição de integridade dos dados");
     }
+
+    @ExceptionHandler(DadoInvalidoException.class)
+    public ProblemDetail dadoInvalido(DadoInvalidoException ex) {
+        return ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, ex.getMessage());
+    }
 }
