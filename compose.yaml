@@ -1,0 +1,16 @@
+services:
+  postgres:
+    image: postgres:17
+    container_name: ipam-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ipam
+      POSTGRES_USER: ipam
+      POSTGRES_PASSWORD: LocalDev123
+    ports:
+      - "127.0.0.1:5432:5432"
+    volumes:
+      - ipam-data:/var/lib/postgresql/data
+
+volumes:
+  ipam-data:
