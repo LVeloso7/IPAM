@@ -1,8 +1,4 @@
 spring:
-  security:
-    user:
-      name: dev
-      password: 12T@ddy34
   application:
     name: ipam
   config:
@@ -10,13 +6,17 @@ spring:
   datasource:
     url: jdbc:postgresql://localhost:5432/ipam
     username: ipam
-    password: LocalDev123
+    password: ${DB_PASSWORD}
   jpa:
     hibernate:
       ddl-auto: validate
     open-in-view: false
   flyway:
     enabled: true
+  security:
+    user:
+      name: ${IPAM_DEV_USER}
+      password: ${IPAM_DEV_PASSWORD}
 
 management:
   endpoints:
