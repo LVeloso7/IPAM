@@ -8,6 +8,8 @@ import org.springframework.transaction.annotation.Transactional;
 import com.projeto.ipam.comum.ConflitoException;
 import com.projeto.ipam.comum.EnderecoRede;
 import com.projeto.ipam.comum.RecursoNaoEncontradoException;
+import com.projeto.ipam.comum.Textos;
+import com.projeto.ipam.ip.EnderecoIpRepository;
 import com.projeto.ipam.vrf.Vrf;
 import com.projeto.ipam.vrf.VrfService;
 
@@ -16,15 +18,19 @@ import com.projeto.ipam.vrf.VrfService;
 public class SubRedeService {
 
     private final SubRedeRepository repository;
+    private final EnderecoIpRepository ipRepository;
     private final VrfService vrfService;
 
-    public SubRedeService(SubRedeRepository repository, VrfService vrfService) {
+    public SubRedeService(SubRedeRepository repository,
+                          EnderecoIpRepository ipRepository,
+                          VrfService vrfService) {
         this.repository = repository;
+        this.ipRepository = ipRepository;
         this.vrfService = vrfService;
     }
 
     public List<SubRedeResponse> listarPorVrf(Long vrfId) {
-        vrfService.buscarPorId(vrfId); // garante 404 se a VRF não existir
+        vrfService.buscarPorId(vrfId);
         return repository.listarPorVrf(vrfId).stream()
                 .map(SubRedeResponse::de)
                 .toList();
@@ -62,12 +68,26 @@ public class SubRedeService {
                     + " já está cadastrada na VRF '" + vrf.getNome() + "'");
         }
 
+        SubRede pai = repository.encontrarPai(vrfId, cidrNormalizado).orElse(null);
+
+        // Um IP já cadastrado não pode virar rede ou broadcast da nova sub-rede.
+        for (String reservado : EnderecoRede.enderecosReservados(cidrNormalizado)) {
+            if (ipRepository.existeNaVrf(vrfId, reservado)) {
+                throw new ConflitoException("O IP " + reservado + " já está cadastrado e seria"
+                        + " o endereço de rede ou de broadcast de " + cidrNormalizado);
+            }
+        }
+
         SubRede nova = new SubRede(vrf, cidrNormalizado, vlanId,
-                normalizar(unidade), normalizar(descricao), usuario);
-        repository.encontrarPai(vrfId, cidrNormalizado).ifPresent(nova::definirPai);
+                Textos.normalizar(unidade), Textos.normalizar(descricao), usuario);
+        nova.definirPai(pai);
 
         repository.save(nova);
         repository.adotarFilhas(vrfId, nova.getId(), cidrNormalizado);
+
+        if (pai != null) {
+            ipRepository.moverParaNovaSubRede(pai.getId(), nova.getId(), cidrNormalizado);
+        }
 
         return buscarPorId(nova.getId());
     }
@@ -75,7 +95,7 @@ public class SubRedeService {
     @Transactional
     public SubRedeResponse atualizar(Long id, Long vlanId, String unidade, String descricao) {
         SubRede subRede = carregar(id);
-        subRede.atualizarDados(vlanId, normalizar(unidade), normalizar(descricao));
+        subRede.atualizarDados(vlanId, Textos.normalizar(unidade), Textos.normalizar(descricao));
         return SubRedeResponse.de(subRede);
     }
 
@@ -83,6 +103,11 @@ public class SubRedeService {
     public void excluir(Long id) {
         SubRede subRede = carregar(id);
         vrfService.bloquearParaAlteracao(subRede.getVrf().getId());
+
+        if (ipRepository.existsBySubRedeId(id)) {
+            throw new ConflitoException("A sub-rede " + subRede.getCidr()
+                    + " possui endereços IP cadastrados e não pode ser excluída");
+        }
 
         repository.promoverFilhas(id);
         repository.deleteById(id);
@@ -92,13 +117,5 @@ public class SubRedeService {
         return repository.findById(id)
                 .orElseThrow(() -> new RecursoNaoEncontradoException(
                         "Sub-rede " + id + " não encontrada"));
-    }
-
-    private String normalizar(String valor) {
-        if (valor == null) {
-            return null;
-        }
-        String limpo = valor.strip();
-        return limpo.isEmpty() ? null : limpo;
     }
 }

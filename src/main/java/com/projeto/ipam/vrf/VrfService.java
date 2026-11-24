@@ -1,5 +1,6 @@
 package com.projeto.ipam.vrf;
 
+import com.projeto.ipam.comum.Textos;
 import java.util.List;
 
 import org.springframework.data.domain.Sort;
@@ -40,26 +41,26 @@ public class VrfService {
 
     @Transactional
     public Vrf criar(String nome, String rd, String descricao) {
-        String nomeLimpo = normalizar(nome);
+        String nomeLimpo = Textos.normalizar(nome);
 
         if (repository.existsByNomeIgnoreCase(nomeLimpo)) {
             throw new ConflitoException("Já existe uma VRF com o nome '" + nomeLimpo + "'");
         }
 
-        Vrf vrf = new Vrf(nomeLimpo, normalizar(rd), normalizar(descricao));
+        Vrf vrf = new Vrf(nomeLimpo, Textos.normalizar(rd), Textos.normalizar(descricao));
         return repository.save(vrf);
     }
 
     @Transactional
     public Vrf atualizar(Long id, String nome, String rd, String descricao) {
         Vrf vrf = buscarPorId(id);
-        String nomeLimpo = normalizar(nome);
+        String nomeLimpo = Textos.normalizar(nome);
 
         if (repository.existsByNomeIgnoreCaseAndIdNot(nomeLimpo, id)) {
             throw new ConflitoException("Já existe outra VRF com o nome '" + nomeLimpo + "'");
         }
 
-        vrf.atualizar(nomeLimpo, normalizar(rd), normalizar(descricao));
+        vrf.atualizar(nomeLimpo, Textos.normalizar(rd), Textos.normalizar(descricao));
         return vrf;
     }
 
@@ -78,11 +79,4 @@ public class VrfService {
         return new RecursoNaoEncontradoException("VRF " + id + " não encontrada");
     }
 
-    private String normalizar(String valor) {
-        if (valor == null) {
-            return null;
-        }
-        String limpo = valor.strip();
-        return limpo.isEmpty() ? null : limpo;
-    }
 }
