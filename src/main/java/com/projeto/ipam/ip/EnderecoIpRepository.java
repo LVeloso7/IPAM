@@ -2,6 +2,7 @@ package com.projeto.ipam.ip;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Collection;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
@@ -58,4 +59,13 @@ public interface EnderecoIpRepository extends JpaRepository<EnderecoIp, Long> {
     int moverParaNovaSubRede(@Param("paiId") Long paiId,
                              @Param("novaId") Long novaId,
                              @Param("cidr") String cidr);
+
+
+    @Query(value = """
+            SELECT sub_rede_id AS subRedeId, COUNT(*) AS quantidade
+            FROM endereco_ip
+            WHERE sub_rede_id IN (:ids)
+            GROUP BY sub_rede_id
+            """, nativeQuery = true)
+    List<ContagemPorSubRede> contarPorSubRedes(@Param("ids") Collection<Long> ids);
 }

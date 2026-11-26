@@ -27,7 +27,7 @@ public class SecaoService {
     }
 
     public List<Secao> listar() {
-        return repository.findAll(Sort.by("nome"));
+        return repository.findAll(Sort.by(Secao::getNome));
     }
 
     public Secao buscarPorId(Long id) {

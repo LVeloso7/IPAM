@@ -24,7 +24,7 @@ public class VrfService {
     }
 
     public List<Vrf> listar() {
-        return repository.findAll(Sort.by("nome"));
+        return repository.findAll(Sort.by(Vrf::getNome));
     }
 
     public Vrf buscarPorId(Long id) {

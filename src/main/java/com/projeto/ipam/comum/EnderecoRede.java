@@ -1,6 +1,8 @@
 package com.projeto.ipam.comum;
 
+import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.math.RoundingMode;
 import java.util.Locale;
 import java.util.stream.Collectors;
 import inet.ipaddr.IPAddress;
@@ -126,5 +128,35 @@ public final class EnderecoRede {
             throw new DadoInvalidoException("'" + texto.strip() + "' não é um endereço IP válido");
         }
         return endereco;
+    }
+        // Resultado do cálculo de ocupação de uma rede.
+    public record Ocupacao(BigInteger total, BigInteger ocupados, double percentual) {
+    }
+
+    public static Ocupacao calcularOcupacao(String cidr, Collection<String> cidrsFilhas,
+                                            long ipsCadastrados) {
+        IPAddress rede = paraEndereco(cidr);
+        BigInteger total = rede.getCount();
+        List<IPAddress> filhas = cidrsFilhas.stream().map(EnderecoRede::paraEndereco).toList();
+
+        BigInteger emFilhas = filhas.stream()
+                .map(IPAddress::getCount)
+                .reduce(BigInteger.ZERO, BigInteger::add);
+
+        long reservadosForaDeFilhas = enderecosReservados(cidr).stream()
+                .map(EnderecoRede::paraEndereco)
+                .filter(reservado -> filhas.stream().noneMatch(f -> f.contains(reservado)))
+                .count();
+
+        BigInteger ocupados = emFilhas
+                .add(BigInteger.valueOf(ipsCadastrados))
+                .add(BigInteger.valueOf(reservadosForaDeFilhas));
+
+        double percentual = new BigDecimal(ocupados)
+                .multiply(BigDecimal.valueOf(100))
+                .divide(new BigDecimal(total), 1, RoundingMode.HALF_UP)
+                .doubleValue();
+
+        return new Ocupacao(total, ocupados, percentual);
     }
 }

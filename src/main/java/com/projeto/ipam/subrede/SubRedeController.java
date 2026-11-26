@@ -3,6 +3,8 @@ package com.projeto.ipam.subrede;
 import java.net.URI;
 import java.util.List;
 
+import com.projeto.ipam.comum.DadoInvalidoException;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -51,6 +53,15 @@ public class SubRedeController {
         URI local = uriBuilder.path("/api/sub-redes/{id}")
                 .buildAndExpand(criada.id()).toUri();
         return ResponseEntity.created(local).body(criada);
+    }
+
+    @GetMapping("/sub-redes/criticas")
+    public List<SubRedeResponse> listarCriticas(
+            @RequestParam(defaultValue = "85") double percentual) {
+        if (percentual < 0 || percentual > 100) {
+            throw new DadoInvalidoException("O percentual deve estar entre 0 e 100");
+        }
+        return service.listarCriticas(percentual);
     }
 
     @GetMapping("/sub-redes/{id}")

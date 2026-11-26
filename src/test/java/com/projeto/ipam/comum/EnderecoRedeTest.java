@@ -101,4 +101,32 @@ class EnderecoRedeTest {
     void recusaMacInvalido() {
         assertThrows(DadoInvalidoException.class, () -> EnderecoRede.normalizarMac("08:00:2b:zz"));
     }
+        @Test
+    void ocupacaoDeRedeVaziaContaSoRedeEBroadcast() {
+        var ocupacao = EnderecoRede.calcularOcupacao("10.0.5.0/24", List.of(), 0);
+        assertEquals(256, ocupacao.total().intValue());
+        assertEquals(2, ocupacao.ocupados().intValue());
+        assertEquals(0.8, ocupacao.percentual());
+    }
+
+    @Test
+    void ocupacaoSomaFilhasEIpsSemContarDuasVezes() {
+        // /26 = 64, mais 3 IPs, mais o broadcast .255 (o .0 já está dentro da /26)
+        var ocupacao = EnderecoRede.calcularOcupacao("10.0.5.0/24", List.of("10.0.5.0/26"), 3);
+        assertEquals(68, ocupacao.ocupados().intValue());
+        assertEquals(26.6, ocupacao.percentual());
+    }
+
+    @Test
+    void redeTotalmenteDivididaEmFilhasFicaEmCemPorCento() {
+        var ocupacao = EnderecoRede.calcularOcupacao("10.0.5.0/24",
+                List.of("10.0.5.0/26", "10.0.5.64/26", "10.0.5.128/26", "10.0.5.192/26"), 0);
+        assertEquals(100.0, ocupacao.percentual());
+    }
+
+    @Test
+    void ocupacaoDeBarra31NaoTemReservados() {
+        var ocupacao = EnderecoRede.calcularOcupacao("10.0.5.0/31", List.of(), 0);
+        assertEquals(0.0, ocupacao.percentual());
+    }
 }

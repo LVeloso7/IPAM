@@ -2,6 +2,7 @@ package com.projeto.ipam.subrede;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Collection;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
@@ -88,4 +89,12 @@ public interface SubRedeRepository extends JpaRepository<SubRede, Long> {
     @Query(value = "SELECT * FROM sub_rede WHERE vlan_id = :vlanId ORDER BY cidr",
            nativeQuery = true)
     List<SubRede> listarPorVlan(@Param("vlanId") Long vlanId);
+
+    @Query(value = """
+            SELECT pai_id AS paiId, CAST(cidr AS text) AS cidr
+            FROM sub_rede
+            WHERE pai_id IN (:ids)
+            """, nativeQuery = true)
+    List<FilhaResumo> listarFilhasDe(@Param("ids") Collection<Long> ids);
+    
 }

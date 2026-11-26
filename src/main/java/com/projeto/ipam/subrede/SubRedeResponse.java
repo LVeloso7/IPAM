@@ -1,5 +1,7 @@
 package com.projeto.ipam.subrede;
 
+import com.projeto.ipam.comum.EnderecoRede;
+
 import java.time.Instant;
 
 public record SubRedeResponse(
@@ -16,9 +18,10 @@ public record SubRedeResponse(
         String unidade,
         String descricao,
         Instant criadoEm,
-        String criadoPor) {
+        String criadoPor,
+        OcupacaoResponse ocupacao) {
 
-    static SubRedeResponse de(SubRede s) {
+    static SubRedeResponse de(SubRede s, EnderecoRede.Ocupacao ocupacao) {
         return new SubRedeResponse(
                 s.getId(),
                 s.getVrf().getId(),
@@ -33,6 +36,7 @@ public record SubRedeResponse(
                 s.getUnidade(),
                 s.getDescricao(),
                 s.getCriadoEm(),
-                s.getCriadoPor());
+                s.getCriadoPor(),
+                OcupacaoResponse.de(ocupacao));
     }
 }
