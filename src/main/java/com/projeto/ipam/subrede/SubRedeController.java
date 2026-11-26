@@ -68,7 +68,7 @@ public class SubRedeController {
         return service.listarPorSecao(secaoId);
     }
 
-        @PutMapping("/sub-redes/{id}")
+    @PutMapping("/sub-redes/{id}")
     public SubRedeResponse atualizar(@PathVariable Long id,
                                      @Valid @RequestBody SubRedeAtualizacaoRequest req) {
         return service.atualizar(id, req.secaoId(), req.vlanId(), req.unidade(), req.descricao());
@@ -78,5 +78,10 @@ public class SubRedeController {
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void excluir(@PathVariable Long id) {
         service.excluir(id);
+    }
+
+    @GetMapping("/vlans/{vlanId}/sub-redes")
+    public List<SubRedeResponse> listarPorVlan(@PathVariable Long vlanId) {
+        return service.listarPorVlan(vlanId);
     }
 }

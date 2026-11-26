@@ -14,6 +14,9 @@ import com.projeto.ipam.vrf.Vrf;
 import com.projeto.ipam.vrf.VrfService;
 import com.projeto.ipam.secao.Secao;
 import com.projeto.ipam.secao.SecaoService;
+import com.projeto.ipam.vlan.Vlan;
+import com.projeto.ipam.vlan.VlanService;
+import com.projeto.ipam.comum.DadoInvalidoException;
 
 @Service
 @Transactional(readOnly = true)
@@ -23,15 +26,18 @@ public class SubRedeService {
     private final EnderecoIpRepository ipRepository;
     private final VrfService vrfService;
     private final SecaoService secaoService;
+    private final VlanService vlanService;
 
     public SubRedeService(SubRedeRepository repository,
                           EnderecoIpRepository ipRepository,
                           VrfService vrfService,
-                          SecaoService secaoService) {
+                          SecaoService secaoService,
+                        VlanService vlanService) {
         this.repository = repository;
         this.ipRepository = ipRepository;
         this.vrfService = vrfService;
         this.secaoService = secaoService;
+        this.vlanService = vlanService;
     }
     
     public List<SubRedeResponse> listarPorSecao(Long secaoId) {
@@ -69,11 +75,24 @@ public class SubRedeService {
                         "Nenhuma sub-rede cadastrada contém o IP " + ipNormalizado));
     }
 
+    private Vlan resolverVlan(Long vlanId, Secao secao) {
+        if (vlanId == null) {
+            return null;
+        }
+        Vlan vlan = vlanService.buscarPorId(vlanId);
+        if (!vlan.getSecao().getId().equals(secao.getId())) {
+            throw new DadoInvalidoException("A VLAN " + vlan.getNumero()
+                    + " pertence a outra seção. Escolha uma VLAN da seção '" + secao.getNome() + "'");
+        }
+        return vlan;
+    }
+
     @Transactional
     public SubRedeResponse criar(Long vrfId, Long secaoId, String cidr, Long vlanId,
                                  String unidade, String descricao, String usuario) {
         String cidrNormalizado = EnderecoRede.normalizarCidr(cidr);
         Secao secao = secaoService.buscarPorId(secaoId);
+        Vlan vlan = resolverVlan(vlanId, secao);
         Vrf vrf = vrfService.bloquearParaAlteracao(vrfId);
 
         if (repository.existeNaVrf(vrfId, cidrNormalizado)) {
@@ -91,7 +110,7 @@ public class SubRedeService {
             }
         }
 
-        SubRede nova = new SubRede(vrf, secao, cidrNormalizado, vlanId,
+        SubRede nova = new SubRede(vrf, secao, cidrNormalizado, vlan,
                 Textos.normalizar(unidade), Textos.normalizar(descricao), usuario);
         nova.definirPai(pai);
 
@@ -110,7 +129,8 @@ public class SubRedeService {
                                      String unidade, String descricao) {
         SubRede subRede = carregar(id);
         Secao secao = secaoService.buscarPorId(secaoId);
-        subRede.atualizarDados(secao, vlanId,
+        Vlan vlan = resolverVlan(vlanId, secao);
+        subRede.atualizarDados(secao, vlan,
                 Textos.normalizar(unidade), Textos.normalizar(descricao));
         return SubRedeResponse.de(subRede);
     }
@@ -133,5 +153,12 @@ public class SubRedeService {
         return repository.findById(id)
                 .orElseThrow(() -> new RecursoNaoEncontradoException(
                         "Sub-rede " + id + " não encontrada"));
+    }
+
+    public List<SubRedeResponse> listarPorVlan(Long vlanId) {
+        vlanService.buscarPorId(vlanId);
+        return repository.listarPorVlan(vlanId).stream()
+                .map(SubRedeResponse::de)
+                .toList();
     }
 }

@@ -83,4 +83,9 @@ public interface SubRedeRepository extends JpaRepository<SubRede, Long> {
            nativeQuery = true)
     List<SubRede> listarPorSecao(@Param("secaoId") Long secaoId);
 
+        boolean existsByVlanId(Long vlanId);
+
+    @Query(value = "SELECT * FROM sub_rede WHERE vlan_id = :vlanId ORDER BY cidr",
+           nativeQuery = true)
+    List<SubRede> listarPorVlan(@Param("vlanId") Long vlanId);
 }

@@ -6,6 +6,7 @@ import org.hibernate.annotations.ColumnTransformer;
 
 import com.projeto.ipam.secao.Secao;
 import com.projeto.ipam.vrf.Vrf;
+import com.projeto.ipam.vlan.Vlan;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -41,8 +42,9 @@ public class SubRede {
     @ColumnTransformer(write = "?::cidr")
     private String cidr;
 
-    @Column(name = "vlan_id")
-    private Long vlanId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "vlan_id")
+    private Vlan vlan;
 
     @Column(name = "unidade", length = 100)
     private String unidade;
@@ -59,12 +61,12 @@ public class SubRede {
     protected SubRede() {
     }
 
-        public SubRede(Vrf vrf, Secao secao, String cidr, Long vlanId, String unidade,
+        public SubRede(Vrf vrf, Secao secao, String cidr, Vlan vlan, String unidade,
                    String descricao, String criadoPor) {
         this.vrf = vrf;
         this.secao = secao;
         this.cidr = cidr;
-        this.vlanId = vlanId;
+        this.vlan= vlan;
         this.unidade = unidade;
         this.descricao = descricao;
         this.criadoPor = criadoPor;
@@ -72,9 +74,9 @@ public class SubRede {
     }
 
     // VRF e CIDR são imutáveis; a seção, por ser organizacional, pode mudar.
-    public void atualizarDados(Secao secao, Long vlanId, String unidade, String descricao) {
+    public void atualizarDados(Secao secao, Vlan vlan, String unidade, String descricao) {
         this.secao = secao;
-        this.vlanId = vlanId;
+        this.vlan = vlan;
         this.unidade = unidade;
         this.descricao = descricao;
     }
@@ -89,7 +91,7 @@ public class SubRede {
     public Vrf getVrf() { return vrf; }
     public SubRede getPai() { return pai; }
     public String getCidr() { return cidr; }
-    public Long getVlanId() { return vlanId; }
+    public Vlan getVlan() { return vlan; }
     public String getUnidade() { return unidade; }
     public String getDescricao() { return descricao; }
     public Instant getCriadoEm() { return criadoEm; }

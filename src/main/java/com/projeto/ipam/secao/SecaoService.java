@@ -10,6 +10,7 @@ import com.projeto.ipam.comum.ConflitoException;
 import com.projeto.ipam.comum.RecursoNaoEncontradoException;
 import com.projeto.ipam.comum.Textos;
 import com.projeto.ipam.subrede.SubRedeRepository;
+import com.projeto.ipam.vlan.VlanRepository;
 
 @Service
 @Transactional(readOnly = true)
@@ -17,10 +18,12 @@ public class SecaoService {
 
     private final SecaoRepository repository;
     private final SubRedeRepository subRedeRepository;
+    private final VlanRepository vlanRepository;
 
-    public SecaoService(SecaoRepository repository, SubRedeRepository subRedeRepository) {
+    public SecaoService(SecaoRepository repository, SubRedeRepository subRedeRepository, VlanRepository vlanRepository) {
         this.repository = repository;
         this.subRedeRepository = subRedeRepository;
+        this.vlanRepository = vlanRepository;
     }
 
     public List<Secao> listar() {
@@ -58,6 +61,10 @@ public class SecaoService {
         if (subRedeRepository.existsBySecaoId(id)) {
             throw new ConflitoException("A seção '" + secao.getNome()
                     + "' possui sub-redes e não pode ser excluída");
+        }
+        if (vlanRepository.existsBySecaoId(id)) {
+            throw new ConflitoException("A seção '" + secao.getNome()
+                    + "' possui VLANs e não pode ser excluída");
         }
         repository.delete(secao);
     }
