@@ -45,8 +45,8 @@ public class SubRedeController {
                                                  @Valid @RequestBody SubRedeCriacaoRequest req,
                                                  Authentication autenticacao,
                                                  UriComponentsBuilder uriBuilder) {
-        SubRedeResponse criada = service.criar(vrfId, req.cidr(), req.vlanId(),
-                req.unidade(), req.descricao(), autenticacao.getName());
+        SubRedeResponse criada = service.criar(vrfId, req.secaoId(), req.cidr(), 
+        req.vlanId(), req.unidade(), req.descricao(), autenticacao.getName());
 
         URI local = uriBuilder.path("/api/sub-redes/{id}")
                 .buildAndExpand(criada.id()).toUri();
@@ -63,10 +63,15 @@ public class SubRedeController {
         return service.listarFilhas(id);
     }
 
-    @PutMapping("/sub-redes/{id}")
+    @GetMapping("/secoes/{secaoId}/sub-redes")
+    public List<SubRedeResponse> listarPorSecao(@PathVariable Long secaoId) {
+        return service.listarPorSecao(secaoId);
+    }
+
+        @PutMapping("/sub-redes/{id}")
     public SubRedeResponse atualizar(@PathVariable Long id,
                                      @Valid @RequestBody SubRedeAtualizacaoRequest req) {
-        return service.atualizar(id, req.vlanId(), req.unidade(), req.descricao());
+        return service.atualizar(id, req.secaoId(), req.vlanId(), req.unidade(), req.descricao());
     }
 
     @DeleteMapping("/sub-redes/{id}")

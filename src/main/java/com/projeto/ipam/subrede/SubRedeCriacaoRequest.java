@@ -4,8 +4,12 @@ import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
+import jakarta.validation.constraints.NotNull;
 
 public record SubRedeCriacaoRequest(
+
+        @NotNull(message = "A seção é obrigatória")
+        Long secaoId,
 
         @NotBlank(message = "O CIDR é obrigatório")
         @Size(max = 64, message = "O CIDR deve ter no máximo 64 caracteres")

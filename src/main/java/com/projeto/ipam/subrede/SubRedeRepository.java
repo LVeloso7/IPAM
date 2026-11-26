@@ -76,4 +76,11 @@ public interface SubRedeRepository extends JpaRepository<SubRede, Long> {
             WHERE pai_id = :removidaId
             """, nativeQuery = true)
     int promoverFilhas(@Param("removidaId") Long removidaId);
+
+        boolean existsBySecaoId(Long secaoId);
+
+    @Query(value = "SELECT * FROM sub_rede WHERE secao_id = :secaoId ORDER BY cidr",
+           nativeQuery = true)
+    List<SubRede> listarPorSecao(@Param("secaoId") Long secaoId);
+
 }

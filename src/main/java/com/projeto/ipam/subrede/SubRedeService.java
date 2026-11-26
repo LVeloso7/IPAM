@@ -12,6 +12,8 @@ import com.projeto.ipam.comum.Textos;
 import com.projeto.ipam.ip.EnderecoIpRepository;
 import com.projeto.ipam.vrf.Vrf;
 import com.projeto.ipam.vrf.VrfService;
+import com.projeto.ipam.secao.Secao;
+import com.projeto.ipam.secao.SecaoService;
 
 @Service
 @Transactional(readOnly = true)
@@ -20,13 +22,23 @@ public class SubRedeService {
     private final SubRedeRepository repository;
     private final EnderecoIpRepository ipRepository;
     private final VrfService vrfService;
+    private final SecaoService secaoService;
 
     public SubRedeService(SubRedeRepository repository,
                           EnderecoIpRepository ipRepository,
-                          VrfService vrfService) {
+                          VrfService vrfService,
+                          SecaoService secaoService) {
         this.repository = repository;
         this.ipRepository = ipRepository;
         this.vrfService = vrfService;
+        this.secaoService = secaoService;
+    }
+    
+    public List<SubRedeResponse> listarPorSecao(Long secaoId) {
+        secaoService.buscarPorId(secaoId);
+        return repository.listarPorSecao(secaoId).stream()
+                .map(SubRedeResponse::de)
+                .toList();
     }
 
     public List<SubRedeResponse> listarPorVrf(Long vrfId) {
@@ -58,9 +70,10 @@ public class SubRedeService {
     }
 
     @Transactional
-    public SubRedeResponse criar(Long vrfId, String cidr, Long vlanId,
+    public SubRedeResponse criar(Long vrfId, Long secaoId, String cidr, Long vlanId,
                                  String unidade, String descricao, String usuario) {
         String cidrNormalizado = EnderecoRede.normalizarCidr(cidr);
+        Secao secao = secaoService.buscarPorId(secaoId);
         Vrf vrf = vrfService.bloquearParaAlteracao(vrfId);
 
         if (repository.existeNaVrf(vrfId, cidrNormalizado)) {
@@ -78,7 +91,7 @@ public class SubRedeService {
             }
         }
 
-        SubRede nova = new SubRede(vrf, cidrNormalizado, vlanId,
+        SubRede nova = new SubRede(vrf, secao, cidrNormalizado, vlanId,
                 Textos.normalizar(unidade), Textos.normalizar(descricao), usuario);
         nova.definirPai(pai);
 
@@ -93,9 +106,12 @@ public class SubRedeService {
     }
 
     @Transactional
-    public SubRedeResponse atualizar(Long id, Long vlanId, String unidade, String descricao) {
+    public SubRedeResponse atualizar(Long id, Long secaoId, Long vlanId,
+                                     String unidade, String descricao) {
         SubRede subRede = carregar(id);
-        subRede.atualizarDados(vlanId, Textos.normalizar(unidade), Textos.normalizar(descricao));
+        Secao secao = secaoService.buscarPorId(secaoId);
+        subRede.atualizarDados(secao, vlanId,
+                Textos.normalizar(unidade), Textos.normalizar(descricao));
         return SubRedeResponse.de(subRede);
     }
 

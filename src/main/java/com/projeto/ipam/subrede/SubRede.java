@@ -4,6 +4,7 @@ import java.time.Instant;
 
 import org.hibernate.annotations.ColumnTransformer;
 
+import com.projeto.ipam.secao.Secao;
 import com.projeto.ipam.vrf.Vrf;
 
 import jakarta.persistence.Column;
@@ -27,6 +28,10 @@ public class SubRede {
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "vrf_id", nullable = false, updatable = false)
     private Vrf vrf;
+
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "secao_id", nullable = false)
+    private Secao secao;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "pai_id")
@@ -54,9 +59,10 @@ public class SubRede {
     protected SubRede() {
     }
 
-    public SubRede(Vrf vrf, String cidr, Long vlanId, String unidade,
+        public SubRede(Vrf vrf, Secao secao, String cidr, Long vlanId, String unidade,
                    String descricao, String criadoPor) {
         this.vrf = vrf;
+        this.secao = secao;
         this.cidr = cidr;
         this.vlanId = vlanId;
         this.unidade = unidade;
@@ -65,8 +71,9 @@ public class SubRede {
         this.criadoEm = Instant.now();
     }
 
-    // Só os dados descritivos podem ser alterados. VRF e CIDR são imutáveis.
-    public void atualizarDados(Long vlanId, String unidade, String descricao) {
+    // VRF e CIDR são imutáveis; a seção, por ser organizacional, pode mudar.
+    public void atualizarDados(Secao secao, Long vlanId, String unidade, String descricao) {
+        this.secao = secao;
         this.vlanId = vlanId;
         this.unidade = unidade;
         this.descricao = descricao;
@@ -77,6 +84,7 @@ public class SubRede {
         this.pai = pai;
     }
 
+    public Secao getSecao() { return secao; }
     public Long getId() { return id; }
     public Vrf getVrf() { return vrf; }
     public SubRede getPai() { return pai; }
