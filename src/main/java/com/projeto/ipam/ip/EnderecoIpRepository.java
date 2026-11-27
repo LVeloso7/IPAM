@@ -68,4 +68,20 @@ public interface EnderecoIpRepository extends JpaRepository<EnderecoIp, Long> {
             GROUP BY sub_rede_id
             """, nativeQuery = true)
     List<ContagemPorSubRede> contarPorSubRedes(@Param("ids") Collection<Long> ids);
+
+    @Query(value = """
+            SELECT * FROM endereco_ip
+            WHERE endereco = CAST(:ip AS inet)
+            ORDER BY vrf_id
+            """, nativeQuery = true)
+    List<EnderecoIp> buscarEmTodasVrfs(@Param("ip") String ip);
+
+    @Query(value = """
+            SELECT * FROM endereco_ip
+            WHERE host(endereco) LIKE :prefixo || '%'
+            ORDER BY endereco
+            LIMIT 100
+            """, nativeQuery = true)
+    List<EnderecoIp> buscarPorPrefixo(@Param("prefixo") String prefixo);
+
 }

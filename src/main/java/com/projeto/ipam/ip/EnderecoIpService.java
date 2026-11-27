@@ -59,6 +59,18 @@ public class EnderecoIpService {
                 .toList();
     }
 
+    public List<EnderecoIpResponse> buscarEmTodasVrfs(String ip) {
+        return repository.buscarEmTodasVrfs(ip).stream()
+                .map(EnderecoIpResponse::de)
+                .toList();
+    }
+
+    public List<EnderecoIpResponse> buscarPorPrefixo(String prefixo) {
+        return repository.buscarPorPrefixo(prefixo).stream()
+                .map(EnderecoIpResponse::de)
+                .toList();
+    }
+
     public ProximoIpResponse proximoLivre(Long subRedeId) {
         SubRede subRede = carregarSubRede(subRedeId);
 

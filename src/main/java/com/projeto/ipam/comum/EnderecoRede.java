@@ -159,4 +159,21 @@ public final class EnderecoRede {
 
         return new Ocupacao(total, ocupados, percentual);
     }
+    // Devolve o IP normalizado, ou vazio se o texto não for um IP válido.
+    public static Optional<String> tentarNormalizarIp(String texto) {
+        try {
+            return Optional.of(normalizarIp(texto));
+        } catch (DadoInvalidoException e) {
+            return Optional.empty();
+        }
+    }
+
+    // Devolve o CIDR normalizado, ou vazio se o texto não for um CIDR válido.
+    public static Optional<String> tentarNormalizarCidr(String texto) {
+        try {
+            return Optional.of(normalizarCidr(texto));
+        } catch (DadoInvalidoException e) {
+            return Optional.empty();
+        }
+    }
 }

@@ -97,4 +97,33 @@ public interface SubRedeRepository extends JpaRepository<SubRede, Long> {
             """, nativeQuery = true)
     List<FilhaResumo> listarFilhasDe(@Param("ids") Collection<Long> ids);
     
+    // Sub-redes que contêm o IP, da mais específica para a mais ampla, em todas as VRFs.
+    @Query(value = """
+            SELECT * FROM sub_rede
+            WHERE cidr >>= CAST(:ip AS inet)
+            ORDER BY masklen(cidr) DESC, vrf_id
+            LIMIT 50
+            """, nativeQuery = true)
+    List<SubRede> buscarQueContem(@Param("ip") String ip);
+
+    // Sub-redes iguais ou contidas no bloco informado, em todas as VRFs.
+    @Query(value = """
+            SELECT * FROM sub_rede
+            WHERE cidr <<= CAST(:cidr AS cidr)
+            ORDER BY cidr
+            LIMIT 50
+            """, nativeQuery = true)
+    List<SubRede> buscarContidasEm(@Param("cidr") String cidr);
+
+    // Sub-redes cujo endereço começa com o prefixo. O prefixo é validado antes de chegar aqui.
+    @Query(value = """
+            SELECT * FROM sub_rede
+            WHERE CAST(cidr AS text) LIKE :prefixo || '%'
+            ORDER BY cidr
+            LIMIT 50
+            """, nativeQuery = true)
+    List<SubRede> buscarPorPrefixo(@Param("prefixo") String prefixo);
+
+    List<SubRede> findTop50ByDescricaoContainingIgnoreCaseOrderByDescricaoAsc(String termo);
+
 }

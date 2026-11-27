@@ -92,6 +92,23 @@ public class SubRedeService {
                 .toList();
     }
 
+    public List<SubRedeResponse> buscarQueContem(String ip) {
+        return paraRespostas(repository.buscarQueContem(ip));
+    }
+
+    public List<SubRedeResponse> buscarContidasEm(String cidr) {
+        return paraRespostas(repository.buscarContidasEm(cidr));
+    }
+
+    public List<SubRedeResponse> buscarPorPrefixo(String prefixo) {
+        return paraRespostas(repository.buscarPorPrefixo(prefixo));
+    }
+
+    public List<SubRedeResponse> buscarPorDescricao(String termo) {
+        return paraRespostas(
+                repository.findTop50ByDescricaoContainingIgnoreCaseOrderByDescricaoAsc(termo));
+    }
+
     // ---------------------------------------------------------------
     // Alterações
     // ---------------------------------------------------------------

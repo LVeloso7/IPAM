@@ -5,6 +5,7 @@ import java.time.Instant;
 public record EnderecoIpResponse(
         Long id,
         Long vrfId,
+        String vrfNome,
         Long subRedeId,
         String subRedeCidr,
         String endereco,
@@ -21,6 +22,7 @@ public record EnderecoIpResponse(
         return new EnderecoIpResponse(
                 ip.getId(),
                 ip.getVrf().getId(),
+                ip.getVrf().getNome(),
                 ip.getSubRede().getId(),
                 ip.getSubRede().getCidr(),
                 ip.getEndereco(),
